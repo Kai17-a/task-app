@@ -1,3 +1,5 @@
+# タスク管理アプリ
+
 # TAURI + Nuxt.js + Vuetify template
 
 [TAURI 公式](https://tauri.app/v1/guides/getting-started/prerequisites) <br>
