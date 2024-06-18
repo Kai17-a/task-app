@@ -1,7 +1,7 @@
 -- ワークスペース(workspaces)
 create table if not exists workspaces(
   id integer primary key autoincrement not null,
-  name varchar(15),
+  name varchar(15) unique,
   descript text not null,
   created_at datetime not null default (datetime('now', 'localtime')),
   updated_at datetime not null default (datetime('now', 'localtime'))
