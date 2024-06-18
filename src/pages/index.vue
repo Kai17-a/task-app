@@ -3,7 +3,7 @@
 
   <div class="mt-5">
     <h3>ワークスペース</h3>
-    <div class="tasks mt-3" v-if="taskListSize !== 0">
+    <div class="tasks mt-3" v-if="workspacesSize !== 0">
       <v-row>
         <v-col v-for="workspace in aggregatedData" md="4">
           <v-card
@@ -67,29 +67,38 @@ interface AggregatedTask {
 }
 
 const db = await Database.load("sqlite:task_app.db")
-// ワークスペース取得
-const workspaces: WorkSpace[] = await db.select(`
-  SELECT
-    w.id,
-    w.name,
-    w.descript,
-    t.status,
-    COUNT(*) AS count
-  FROM
-    workspaces w
-  left join
-    tasks t
-  on
-    w.id = t.workspace_id
-  GROUP BY
-    w.name,
-    t.status
-  ORDER BY
-    w.name,
-    t.status;
-`)
 
-const aggregatedData: AggregatedTask[] = workspaces.reduce((result: AggregatedTask[], item: WorkSpace) => {
+
+const aggregatedData: Ref<AggregatedTask[]> = ref([])
+const workspacesSize: Ref<number> = ref(0)
+
+  getWorkspaces().then((result) => console.log(typeof result))
+
+async function getWorkspaces(): Promise<void> {
+  // ワークスペース取得
+  const workspaces: WorkSpace[] = await db.select(`
+    SELECT
+      w.id,
+      w.name,
+      w.descript,
+      t.status,
+      COUNT(*) AS count
+    FROM
+      workspaces w
+    left join
+      tasks t
+    on
+      w.id = t.workspace_id
+    GROUP BY
+      w.name,
+      t.status
+    ORDER BY
+      w.name,
+      t.status;
+  `)
+
+  // ワークスペース内のstatus集計処理
+  const data = workspaces.reduce((result: AggregatedTask[], item: WorkSpace) => {
     const { id, name, status, count, descript } = item;
     // 名前ごとのエントリーを検索または新規作成
     let nameEntry = result.find(entry => entry.name === name);
@@ -105,16 +114,18 @@ const aggregatedData: AggregatedTask[] = workspaces.reduce((result: AggregatedTa
         nameEntry.statuses.push({ status, count });
     }
     return result;
-}, []);
+  }, []);
 
-aggregatedData.forEach(entry => {
+  data.forEach(entry => {
     entry.statuses.sort((a, b) => {
         const order = ['todo', 'working', 'waiting', 'done'];
         return order.indexOf(a.status) - order.indexOf(b.status);
     });
-});
-console.log(aggregatedData)
-const taskListSize: Ref<number> = ref(aggregatedData.length)
+  });
+
+  workspacesSize.value = data.length
+  aggregatedData.value = data
+}
 
 function getStatusName(status: string): string {
   switch (status) {
