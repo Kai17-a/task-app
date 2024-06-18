@@ -5,22 +5,24 @@
     <h3>ワークスペース</h3>
     <div class="tasks mt-3" v-if="taskListSize !== 0">
       <v-row>
-        <v-col v-for="task in taskList" md="6">
+        <v-col v-for="workspace in aggregatedData" md="4">
           <v-card
             class="mx-auto"
-            height="150"
+            height="230"
             min-width="200"
-            subtitle="Same looks, no anchor"
-            :title="task.name"
+            :subtitle="workspace.descript"
+            :title="workspace.name"
             hover
-            @click="navigateTo(`/workspaces/${task.workspaceId}`)"
+            @click="navigateTo(`/workspaces/${workspace.id}`)"
           >
-            <div class="pl-3">
-              <v-chip class="ml-2 mt-1" density="compact" variant="flat" color="secondary">未着手: 1</v-chip>
-              <v-chip class="ml-2 mt-1" density="compact" variant="flat" color="yellow">作業中: 1</v-chip>
-              <v-chip class="ml-2 mt-1" density="compact" variant="flat" color="primary">レビュー待ち: 1</v-chip>
-              <v-chip class="ml-2 mt-1" density="compact" variant="flat" color="green">完了: 1</v-chip>
+            <div v-for="status in workspace.statuses" class="pl-3">
+              <v-chip v-if="status.status !== null" density="compact" variant="flat" :color="getStatusColor(status.status)">
+                {{ getStatusName(status.status) }}: {{ status.count }}
+              </v-chip>
+              <div class="ml-2 mt-1 text-disabled" v-else>タスクなし</div>
+              <br />
             </div>
+
           </v-card>
         </v-col>
         <v-col md="6">
@@ -47,81 +49,101 @@
   </div>
 </template>
 <script lang="ts" setup>
+import Database from "tauri-plugin-sql-api"
 
+interface WorkSpace {
+  id: number;
+  count: number;
+  name: string;
+  descript: string;
+  status: string;
+}
 
-// メイン部分
-const emptyList: object[] = []
-const testList: object[] = [
-  {
-    workspaceId: '1',
-    name: 'ワークスペース１',
-    taskSize: 8,
-    tasks: {
-      todo: 2,
-      working: 2,
-      waiting: 2,
-      done: 2
+interface AggregatedTask {
+    id: number;
+    name: string;
+    descript: string;
+    statuses: { status: string; count: number; }[];
+}
+
+const db = await Database.load("sqlite:task_app.db")
+// ワークスペース取得
+const workspaces: WorkSpace[] = await db.select(`
+  SELECT
+    w.id,
+    w.name,
+    w.descript,
+    t.status,
+    COUNT(*) AS count
+  FROM
+    workspaces w
+  left join
+    tasks t
+  on
+    w.id = t.workspace_id
+  GROUP BY
+    w.name,
+    t.status
+  ORDER BY
+    w.name,
+    t.status;
+`)
+
+const aggregatedData: AggregatedTask[] = workspaces.reduce((result: AggregatedTask[], item: WorkSpace) => {
+    const { id, name, status, count, descript } = item;
+    // 名前ごとのエントリーを検索または新規作成
+    let nameEntry = result.find(entry => entry.name === name);
+    if (!nameEntry) {
+        nameEntry = { id, name, descript, statuses: [] };
+        result.push(nameEntry);
     }
-  },
-  {
-    workspaceId: '2',
-    name: 'ワークスペース２',
-    taskSize: 6,
-    tasks: {
-      todo: 2,
-      working: 2,
-      waiting: 1,
-      done: 1
+    // ステータスのエントリーを検索または新規作成
+    let statusEntry = nameEntry.statuses.find(entry => entry.status === status);
+    if (statusEntry) {
+        statusEntry.count += count;
+    } else {
+        nameEntry.statuses.push({ status, count });
     }
-  },
-  {
-    workspaceId: '3',
-    name: 'ワークスペース３',
-    taskSize: 4,
-    tasks: {
-      todo: 2,
-      working: 1,
-      waiting: 0,
-      done: 1
-    }
-  },
-  {
-    workspaceId: '4',
-    name: 'ワークスペース４',
-    taskSize: 4,
-    tasks: {
-      todo: 2,
-      working: 1,
-      waiting: 0,
-      done: 1
-    }
-  },
-  {
-    workspaceId: '5',
-    name: 'ワークスペース５',
-    taskSize: 4,
-    tasks: {
-      todo: 2,
-      working: 1,
-      waiting: 0,
-      done: 1
-    }
-  },
-  {
-    workspaceId: '6',
-    name: 'ワークスペース６',
-    taskSize: 4,
-    tasks: {
-      todo: 2,
-      working: 1,
-      waiting: 0,
-      done: 1
-    }
-  },
-]
-const taskList: Ref<object[]> = ref(testList)
-// const taskList: Ref<object[]> = ref(emptyList)
-const taskListSize: Ref<number> = ref(taskList.value.length)
+    return result;
+}, []);
+
+aggregatedData.forEach(entry => {
+    entry.statuses.sort((a, b) => {
+        const order = ['todo', 'working', 'waiting', 'done'];
+        return order.indexOf(a.status) - order.indexOf(b.status);
+    });
+});
+console.log(aggregatedData)
+const taskListSize: Ref<number> = ref(aggregatedData.length)
+
+function getStatusName(status: string): string {
+  switch (status) {
+    case "todo":
+      return "未着手"
+    case "working":
+      return "作業中"
+    case "waiting":
+      return "レビュー待ち"
+    case "done":
+      return "完了"
+    default:
+      return "未定義";
+  }
+}
+function getStatusColor(status: string): string {
+  switch (status) {
+    case "todo":
+      return "secondary"
+    case "working":
+      return "yellow"
+    case "waiting":
+      return "primary"
+    case "done":
+      return "green"
+    default:
+      return "gray";
+  }
+}
 </script>
 <style scoped>
 .tasks {
