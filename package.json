@@ -13,7 +13,8 @@
   "dependencies": {
     "@mdi/font": "^7.4.47",
     "@tauri-apps/api": "^1",
-    "nuxt": "^3.12.1"
+    "nuxt": "^3.12.1",
+    "tauri-plugin-sql-api": "https://github.com/tauri-apps/tauri-plugin-sql#v1"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^1",
