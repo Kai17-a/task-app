@@ -12,10 +12,13 @@
           :active="checkPath(`/workspaces/${workspace.id}`)"
           :key="workspace.id"
           :value="workspace.name"
+          color="primary"
           @click="navigateTo(`/workspaces/${workspace.id}`)"
         >
-          <template v-slot:prepend>
-            <v-icon icon="mdi-book"></v-icon>
+          <template v-slot:title>
+            <span class="d-flex justify-center" style="font-size: large;">
+              {{ workspace.name.substring(0,1) }}
+            </span>
           </template>
           <v-tooltip activator="parent" location="start">{{ workspace.name }}</v-tooltip>
         </v-list-item>
