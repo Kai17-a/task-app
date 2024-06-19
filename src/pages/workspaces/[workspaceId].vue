@@ -16,6 +16,9 @@
     <v-col cols="auto">
       <v-btn variant="flat" color="primary" @click="registDialog = true">タスク追加</v-btn>
     </v-col>
+    <v-col cols="auto">
+      <v-btn variant="flat" color="error" @click="deleteDialog = true">ワークスペース削除</v-btn>
+    </v-col>
   </v-row>
 
   <v-dialog v-model="registDialog" width="600" :persistent="pending">
@@ -30,6 +33,20 @@
       <v-card-actions max-width="300">
         <v-spacer></v-spacer>
         <v-btn :loading="pending" variant="flat" color="primary" text="追加" @click="add" />
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
+
+  <v-dialog v-model="deleteDialog" width="350" :persistent="pending">
+    <v-card title="タスク追加">
+      <v-card-text max-width="auto">
+        このワークスペースを削除しますか？
+      </v-card-text>
+
+      <v-card-actions max-width="300">
+        <v-spacer></v-spacer>
+        <v-btn :disabled="pending" variant="outlined" color="error" text="キャンセル" @click="deleteDialog = false" />
+        <v-btn :loading="pending" variant="flat" color="error" text="削除" @click="deleteWorkspace" />
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -73,12 +90,31 @@
       </v-card-actions>
     </v-card>
   </v-dialog>
+
+  <v-dialog v-model="errDialog" width="450">
+    <v-card title="エラー" color="red-lighten-5">
+      <template v-slot:append>
+        <v-icon icon="mdi-close" @click="errDialog = false"></v-icon>
+      </template>
+      <v-card-text max-width="auto">
+        <p>登録に失敗しました。</p>
+        以下の確認をしてください。
+        <li>ワークスペース名が重複していない</li>
+        <br>
+        <p>それ以外の場合は開発者に聞いてね(/・ω・)/</p>
+      </v-card-text>
+    </v-card>
+  </v-dialog>
 </template>
 <script lang="ts" setup>
+import Database from "tauri-plugin-sql-api"
+
 const route = useRoute()
 const workspaceId = route.params.workspaceId
 const searchValue: Ref<string> = ref("");
 const registDialog: Ref<boolean> = ref(false)
+
+const db = await Database.load("sqlite:task_app.db")
 
 function test() {
   console.log(searchValue.value)
@@ -181,6 +217,21 @@ const taskList = [
   }
 ]
 
+// 削除処理
+const deleteDialog: Ref<boolean> = ref(false)
+const errDialog: Ref<boolean> = ref(false)
+async function deleteWorkspace(): Promise<void> {
+  pending.value = true
+  await db.execute(
+    "DELETE FROM workspaces WHERE id = $1", [workspaceId]
+  ).catch((err) => {
+    errDialog.value = true
+  })
+  deleteDialog.value = false
+  pending.value = false
+
+  navigateTo('/')
+}
 </script>
 <style scoped>
 .magnify {
