@@ -13,6 +13,7 @@ create table if not exists tasks(
   name varchar(15) not null,
   descript varchar(15),
   status text not null,
+  priority text not null,
   workspace_id integer not null,
   deadline text not null,
   note text,
