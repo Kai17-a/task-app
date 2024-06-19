@@ -56,7 +56,7 @@
       <h3>{{ task.value }}</h3>
       <v-sheet elevation="1" min-height="580" width="auto" :rounded="true" color="#fefefe" border>
         <div v-for="datasktum in task.data">
-          <v-card min-height="110" class="mx-3 my-3 .bg-surface-secondary" :title="datasktum.title" :text="datasktum.descript" variant="tonal" hover @mouseup="detailDialogOpen(datasktum.id)">
+          <v-card min-height="110" class="mx-3 my-3 .bg-surface-secondary" :title="datasktum.name" :text="datasktum.descript" variant="tonal" hover @mouseup="detailDialogOpen(datasktum.id)">
             <p class="text-body-2 text-right text-red-lighten-1 pr-1" color="red">{{ datasktum.deadline }}</p>
           </v-card>
         </div>
@@ -113,6 +113,7 @@ const route = useRoute()
 const workspaceId = route.params.workspaceId
 const searchValue: Ref<string> = ref("");
 const registDialog: Ref<boolean> = ref(false)
+const errDialog: Ref<boolean> = ref(false)
 
 const db = await Database.load("sqlite:task_app.db")
 
@@ -153,73 +154,102 @@ function deleteTask(id: number) {
   console.log(`delete: ${id}`)
 }
 
+interface Task {
+  id: number;
+  name: string;
+  descript: string;
+  status: 'todo' | 'working' | 'waiting' | 'done';
+  deadline: string;
+  priority: 'low' | 'mid' | 'high';
+}
+
+interface TaskList {
+  todo: {
+    value: string;
+    data: Task[];
+  };
+  working: {
+    value: string;
+    data: Task[];
+  };
+  waiting: {
+    value: string;
+    data: Task[];
+  };
+  done: {
+    value: string;
+    data: Task[];
+  };
+}
+
+const todoTasks: Ref<Task[]> = ref([])
+const workingTasks: Ref<Task[]> = ref([])
+const waitingTasks: Ref<Task[]> = ref([])
+const doneTasks: Ref<Task[]> = ref([])
+
 // メイン部分
-const taskList = [
-  {
-    status: "todo",
+const taskList: Ref<TaskList> = ref({
+  todo: {
     value: "未着手",
-    data: [
-      {
-        id: 1,
-        title: "task1",
-        descript: "タスク１タスク１タスク１タスク１タスク１タスク１タスク１",
-        deadline: "2024/01/01"
-      },
-      {
-        id: 2,
-        title: "task2",
-        descript: "タスク２",
-        deadline: "2024/01/01"
-      }
-    ]
+    data: []
   },
-  {
-    status: "working",
+  working: {
     value: "作業中",
-    data: [
-      {
-        id: 3,
-        title: "task3",
-        descript: "タスク３",
-        deadline: "2024/01/01"
-      },
-      {
-        id: 4,
-        title: "task4",
-        descript: "タスク４",
-        deadline: "2024/01/01"
-      },
-    ]
+    data: []
   },
-  {
-    status: "waiting",
+  waiting: {
     value: "レビュー待ち",
-    data: [
-      {
-        id: 5,
-        title: "task5",
-        descript: "タスク５",
-        deadline: "2024/01/01"
-      }
-    ]
+    data: []
   },
-  {
-    status: "done",
+  done: {
     value: "完了",
-    data: [
-      {
-        id:6,
-        title: "task6",
-        descript: "タスク６",
-        deadline: "2024/01/01"
-      }
-    ]
+    data: []
   }
-]
+})
+
+await getTaskList()
+
+// タスク一覧取得処理
+async function getTaskList(): Promise<void> {
+  const tasks: Task[] = await db.select(
+    "SELECT id, name, descript, status, deadline, priority FROM tasks WHERE workspace_id = $1",
+    [workspaceId]
+  ).catch((err) => {
+    console.log(err)
+    errDialog.value = true
+  })
+
+  tasks.forEach((task: Task) => {
+    switch(task.status) {
+      case 'todo':
+        todoTasks.value.push(task)
+        break;
+      case 'working':
+        workingTasks.value.push(task)
+        break;
+      case 'waiting':
+        waitingTasks.value.push(task)
+        break;
+      case 'done':
+        doneTasks.value.push(task)
+        break;
+    }
+  })
+
+  taskList.value.todo.data = todoTasks.value
+  taskList.value.working.data = workingTasks.value
+  taskList.value.waiting.data = waitingTasks.value
+  taskList.value.done.data = doneTasks.value
+
+  console.log(todoTasks.value)
+  console.log(workingTasks.value)
+  console.log(waitingTasks.value)
+  console.log(doneTasks.value)
+  console.log(taskList.value)
+}
 
 // 削除処理
 const deleteDialog: Ref<boolean> = ref(false)
-const errDialog: Ref<boolean> = ref(false)
 async function deleteWorkspace(): Promise<void> {
   pending.value = true
   await db.execute(
