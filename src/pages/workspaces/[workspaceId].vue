@@ -51,7 +51,7 @@
     </v-card>
   </v-dialog>
 
-  <v-row class="mt-4 tasks">
+  <v-row v-if="tasksSize != 0" class="mt-4 tasks">
     <v-col v-for="task in taskList" cols="3">
       <h3>{{ task.value }}</h3>
       <v-sheet elevation="1" min-height="580" width="auto" :rounded="true" color="#fefefe" border>
@@ -61,6 +61,11 @@
           </v-card>
         </div>
       </v-sheet>
+    </v-col>
+  </v-row>
+  <v-row velse class="mt-6 tasks">
+    <v-col >
+      <h2 class="text-disabled">タスクが存在しません。</h2>
     </v-col>
   </v-row>
 
@@ -182,6 +187,7 @@ interface TaskList {
   };
 }
 
+const tasksSize: Ref<number> = ref(0)
 const todoTasks: Ref<Task[]> = ref([])
 const workingTasks: Ref<Task[]> = ref([])
 const waitingTasks: Ref<Task[]> = ref([])
@@ -219,33 +225,31 @@ async function getTaskList(): Promise<void> {
     errDialog.value = true
   })
 
-  tasks.forEach((task: Task) => {
-    switch(task.status) {
-      case 'todo':
-        todoTasks.value.push(task)
-        break;
-      case 'working':
-        workingTasks.value.push(task)
-        break;
-      case 'waiting':
-        waitingTasks.value.push(task)
-        break;
-      case 'done':
-        doneTasks.value.push(task)
-        break;
-    }
-  })
+  tasksSize.value = tasks.length
 
-  taskList.value.todo.data = todoTasks.value
-  taskList.value.working.data = workingTasks.value
-  taskList.value.waiting.data = waitingTasks.value
-  taskList.value.done.data = doneTasks.value
+  if (tasksSize.value !== 0) {
+    tasks.forEach((task: Task) => {
+      switch(task.status) {
+        case 'todo':
+          todoTasks.value.push(task)
+          break;
+        case 'working':
+          workingTasks.value.push(task)
+          break;
+        case 'waiting':
+          waitingTasks.value.push(task)
+          break;
+        case 'done':
+          doneTasks.value.push(task)
+          break;
+      }
+    })
 
-  console.log(todoTasks.value)
-  console.log(workingTasks.value)
-  console.log(waitingTasks.value)
-  console.log(doneTasks.value)
-  console.log(taskList.value)
+    taskList.value.todo.data = todoTasks.value
+    taskList.value.working.data = workingTasks.value
+    taskList.value.waiting.data = waitingTasks.value
+    taskList.value.done.data = doneTasks.value
+  }
 }
 
 // 削除処理
