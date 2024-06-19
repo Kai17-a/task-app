@@ -1,5 +1,5 @@
 <template>
-  <h1>workspace: {{ workspaceId }}</h1>
+  <h1>{{ workspaceName }}</h1>
   <v-row class="mt-3">
     <v-col cols="4" class="me-auto">
       <v-text-field
@@ -10,7 +10,7 @@
         variant="outlined"
         hide-details
         single-line
-        @click:append="test"
+        @click:append="console.log('test')"
       />
     </v-col>
     <v-col cols="auto">
@@ -32,7 +32,7 @@
 
       <v-card-actions max-width="300">
         <v-spacer></v-spacer>
-        <v-btn :loading="pending" variant="flat" color="primary" text="追加" @click="add" />
+        <v-btn :loading="pending" variant="flat" color="primary" text="追加" @click="console.log('test')" />
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -64,18 +64,39 @@
     </v-col>
   </v-row>
   <v-row velse class="mt-6 tasks">
-    <v-col >
+    <v-col>
       <h2 class="text-disabled">タスクが存在しません。</h2>
     </v-col>
   </v-row>
 
   <v-dialog v-model="detailDialog" width="600">
-    <v-card title="タスク追加">
+    <v-card :subtitle="taskDetail.descript">
+      <template v-slot:title>
+        <div class="d-flex align-center">
+          {{ taskDetail.name }}
+          <v-chip variant="flat" density="compact" :color="getStatusColor(taskDetail.status)">
+            {{ getStatusName(taskDetail.status) }}
+          </v-chip>
+        </div>
+      </template>
       <template v-slot:append>
         <v-icon icon="mdi-close" :class="(pending) ? 'not-allowed' : ''" @click="detailDialog = false"></v-icon>
       </template>
       <v-card-text max-width="auto">
-        タスク詳細
+        <div class="mb-1">メモ&nbsp;:</div>
+        <v-sheet v-if="true" class="pa-3" min-height="150" color="#fefefe" :rounded="true" border>
+          {{ taskDetail.note }}
+        </v-sheet>
+        <v-textarea
+          v-else
+          :model-value="taskDetail.note"
+          variant="outlined"
+          disabled
+        ></v-textarea>
+      </v-card-text>
+      <v-card-text class="mt-n5">
+        <div class="mb-1">サブタスク&nbsp;:</div>
+
       </v-card-text>
 
       <v-card-actions max-width="300">
@@ -119,36 +140,16 @@ const workspaceId = route.params.workspaceId
 const searchValue: Ref<string> = ref("");
 const registDialog: Ref<boolean> = ref(false)
 const errDialog: Ref<boolean> = ref(false)
+  const pending: Ref<boolean> = ref(false)
 
 const db = await Database.load("sqlite:task_app.db")
 
-function test() {
-  console.log(searchValue.value)
-}
-
-const pending: Ref<boolean> = ref(false)
 function closeRegistDialog() {
   if (pending.value) {
     return
   } else {
     registDialog.value = false
   }
-}
-async function add() {
-  pending.value = true
-  await new Promise(resolve => setTimeout(resolve, 3000))
-  console.log("3秒経過")
-  registDialog.value = false
-  pending.value = false
-}
-
-// タスク詳細を開く
-const detailDialog: Ref<boolean> = ref(false)
-const openTaskId: Ref<number> = ref(0)
-function detailDialogOpen(id: number) {
-  openTaskId.value = id
-  console.log(`open detail: ${openTaskId.value}`)
-  detailDialog.value = true
 }
 
 // タスク削除
@@ -157,6 +158,20 @@ function deleteTask(id: number) {
   deleteConfirmDialog.value = false
   detailDialog.value = false
   console.log(`delete: ${id}`)
+}
+
+// ワークスペース名
+const workspaceName: Ref<string> = ref("")
+await getWorkspacesName(Number(workspaceId))
+async function getWorkspacesName(workspaceId: number) {
+  const workspaces: object[] = await db.select(
+    "SELECT name FROM workspaces WHERE id = $1",
+    [workspaceId]
+  ).catch((err) => {
+    console.log(err)
+    errDialog.value = true
+  })
+  workspaceName.value = workspaces[0].name
 }
 
 interface Task {
@@ -212,10 +227,8 @@ const taskList: Ref<TaskList> = ref({
     data: []
   }
 })
-
-await getTaskList()
-
 // タスク一覧取得処理
+await getTaskList()
 async function getTaskList(): Promise<void> {
   const tasks: Task[] = await db.select(
     "SELECT id, name, descript, status, deadline, priority FROM tasks WHERE workspace_id = $1",
@@ -250,6 +263,49 @@ async function getTaskList(): Promise<void> {
     taskList.value.waiting.data = waitingTasks.value
     taskList.value.done.data = doneTasks.value
   }
+}
+
+// タスク詳細取得
+interface TaskDetail {
+  id: number;
+  name: string;
+  descript: string;
+  status: string;
+  deadline: string;
+  note: string;
+  priority: string;
+  created_at: string;
+}
+const taskDetail: Ref<TaskDetail> = ref({
+  id: 0,
+  name: "",
+  descript: "",
+  status: "",
+  deadline: "",
+  note: "",
+  priority: "",
+  created_at: "",
+})
+
+async function getTaskDetail(taskId: number): Promise<void> {
+  const result: TaskDetail[] = await db.select(
+    "SELECT id, name, descript, status, deadline, note, priority, created_at FROM tasks WHERE id = $1",
+    [taskId]
+  ).catch((err) => {
+    console.log(err)
+    errDialog.value = true
+  })
+
+  taskDetail.value = result[0]
+}
+
+// タスク詳細を開く
+const detailDialog: Ref<boolean> = ref(false)
+const openTaskId: Ref<number> = ref(0)
+async function detailDialogOpen(id: number) {
+  openTaskId.value = id
+  await getTaskDetail(id)
+  detailDialog.value = true
 }
 
 // 削除処理
