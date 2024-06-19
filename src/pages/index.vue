@@ -142,6 +142,7 @@ async function getWorkspaces(): Promise<void> {
       w.name,
       t.status
     ORDER BY
+      w.created_at,
       w.name,
       t.status;
   `)
