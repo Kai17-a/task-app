@@ -1,3 +1,8 @@
+/**
+ * 論理名から物理名を取得
+ * @param status
+ * @returns ステータス物理名
+ */
 export const getStatusName = (status: string): string => {
   switch (status) {
     case "todo":
@@ -13,6 +18,11 @@ export const getStatusName = (status: string): string => {
   }
 }
 
+/**
+ * ステータスに紐づく色取得
+ * @param status
+ * @returns
+ */
 export const getStatusColor = (status: string): string => {
   switch (status) {
     case "todo":
