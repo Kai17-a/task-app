@@ -37,7 +37,7 @@
   <v-row class="mt-4 tasks">
     <v-col v-for="task in taskList" cols="3">
       <h3>{{ task.value }}</h3>
-      <v-sheet elevation="1" min-height="600" width="auto" :rounded="true" color="#fefefe" border>
+      <v-sheet elevation="1" min-height="580" width="auto" :rounded="true" color="#fefefe" border>
         <div v-for="datasktum in task.data">
           <v-card min-height="110" class="mx-3 my-3 .bg-surface-secondary" :title="datasktum.title" :text="datasktum.descript" variant="tonal" hover @mouseup="detailDialogOpen(datasktum.id)">
             <p class="text-body-2 text-right text-red-lighten-1 pr-1" color="red">{{ datasktum.deadline }}</p>
