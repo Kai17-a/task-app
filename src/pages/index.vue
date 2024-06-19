@@ -177,35 +177,6 @@ async function getWorkspaces(): Promise<void> {
   aggregatedData.value = data
 }
 
-function getStatusName(status: string): string {
-  switch (status) {
-    case "todo":
-      return "未着手"
-    case "working":
-      return "作業中"
-    case "waiting":
-      return "レビュー待ち"
-    case "done":
-      return "完了"
-    default:
-      return "未定義";
-  }
-}
-function getStatusColor(status: string): string {
-  switch (status) {
-    case "todo":
-      return "secondary"
-    case "working":
-      return "yellow"
-    case "waiting":
-      return "primary"
-    case "done":
-      return "green"
-    default:
-      return "gray";
-  }
-}
-
 const newWorkspaceName: Ref<string> = ref("")
 const newWorkspaceDescript: Ref<string> = ref("")
 const registErrDialog: Ref<boolean> = ref(false)
