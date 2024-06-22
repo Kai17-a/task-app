@@ -240,10 +240,21 @@ function closeRegistDialog() {
 
 // タスク削除
 const deleteConfirmDialog: Ref<boolean> = ref(false)
-function deleteTask(id: number) {
-  deleteConfirmDialog.value = false
-  detailDialog.value = false
-  console.log(`delete: ${id}`)
+async function deleteTask(id: number) {
+  try {
+    pending.value = true
+    await db.execute(
+      "DELETE FROM tasks WHERE id = $1",
+      [id]
+    )
+    await getTaskList()
+    deleteConfirmDialog.value = false
+    detailDialog.value = false
+    pending.value = true
+  } catch (err) {
+    console.log(err)
+    errDialog.value = true
+  }
 }
 
 // ワークスペース名
@@ -317,6 +328,13 @@ const taskList: Ref<TaskList> = ref({
 // タスク一覧取得処理
 await getTaskList()
 async function getTaskList(): Promise<void> {
+  if (tasksSize.value !== 0) {
+    taskList.value.todo.data.splice(0)
+    taskList.value.working.data.splice(0)
+    taskList.value.waiting.data.splice(0)
+    taskList.value.done.data.splice(0)
+  }
+
   const tasks: Task[] = await db.select(
     "SELECT id, name, descript, status, deadline, priority FROM tasks WHERE workspace_id = $1",
     [workspaceId]
