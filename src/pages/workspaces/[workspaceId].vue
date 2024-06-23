@@ -115,8 +115,8 @@
                 type="checkbox"
                 id="sub-task"
                 :value="true"
-                v-model="subTask.isDone"
-                @change="updateSubTask(subTask.id, subTask.isDone)"
+                v-model="subTask.is_done"
+                @change="updateSubTask(subTask.id, subTask.is_done)"
               >
               <span class="mr-1" style="font-size:small;">
                 {{ subTask.name }}
@@ -389,7 +389,7 @@ const taskDetail: Ref<TaskDetail> = ref({
 interface SubTask {
   id: number;
   name: string;
-  isDone: boolean;
+  is_done: boolean;
 }
 
 async function getTaskDetail(taskId: number): Promise<void> {
@@ -410,7 +410,7 @@ async function getTaskDetail(taskId: number): Promise<void> {
 const subTasks: Ref<SubTask[]> = ref([{
   id: 0,
   name: "",
-  isDone: false
+  is_done: false
 }])
 const subTasksSize: Ref<number> = ref(0)
 // // サブタスク取得
