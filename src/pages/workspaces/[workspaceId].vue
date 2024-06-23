@@ -249,17 +249,21 @@ async function deleteTask(id: number) {
 }
 
 // ワークスペース名
+interface Workspace {
+  name: string;
+}
 const workspaceName: Ref<string> = ref("")
 await getWorkspacesName(Number(workspaceId))
 async function getWorkspacesName(workspaceId: number) {
-  const workspaces: object[] = await db.select(
-    "SELECT name FROM workspaces WHERE id = $1",
-    [workspaceId]
-  ).catch((err) => {
-    console.log(err)
+  try {
+    const workspaces: Workspace[] = await db.select(
+      "SELECT name FROM workspaces WHERE id = $1",
+      [workspaceId]
+    )
+    workspaceName.value = workspaces[0].name
+  } catch (err) {
     errDialog.value = true
-  })
-  workspaceName.value = workspaces[0].name
+  }
 }
 
 interface Task {
@@ -325,39 +329,37 @@ async function getTaskList(): Promise<void> {
     taskList.value.waiting.data.splice(0)
     taskList.value.done.data.splice(0)
   }
+  try {
+    const tasks: Task[] = await db.select(
+      "SELECT id, name, descript, status, deadline, priority FROM tasks WHERE workspace_id = $1",
+      [workspaceId]
+    )
 
-  const tasks: Task[] = await db.select(
-    "SELECT id, name, descript, status, deadline, priority FROM tasks WHERE workspace_id = $1",
-    [workspaceId]
-  ).catch((err) => {
-    console.log(err)
-    errDialog.value = true
-  })
-
-  tasksSize.value = tasks.length
-
-  if (tasksSize.value !== 0) {
-    tasks.forEach((task: Task) => {
-      switch(task.status) {
-        case 'todo':
-          todoTasks.value.push(task)
-          break;
-        case 'working':
-          workingTasks.value.push(task)
-          break;
-        case 'waiting':
-          waitingTasks.value.push(task)
-          break;
-        case 'done':
-          doneTasks.value.push(task)
-          break;
-      }
-    })
-
+    tasksSize.value = tasks.length
+    if (tasksSize.value !== 0) {
+      tasks.forEach((task: Task) => {
+        switch(task.status) {
+          case 'todo':
+            todoTasks.value.push(task)
+            break;
+          case 'working':
+            workingTasks.value.push(task)
+            break;
+          case 'waiting':
+            waitingTasks.value.push(task)
+            break;
+          case 'done':
+            doneTasks.value.push(task)
+            break;
+        }
+      })
+    }
     taskList.value.todo.data = todoTasks.value
     taskList.value.working.data = workingTasks.value
     taskList.value.waiting.data = waitingTasks.value
     taskList.value.done.data = doneTasks.value
+  } catch (err) {
+    errDialog.value = true
   }
 }
 
@@ -391,17 +393,17 @@ interface SubTask {
 }
 
 async function getTaskDetail(taskId: number): Promise<void> {
-  // メインタスク取得
-  const mainTasks: TaskDetail[] = await db.select(
-    "SELECT id, name, descript, status, deadline, note, priority, created_at FROM tasks WHERE id = $1",
-    [taskId]
-  ).catch((err) => {
-    console.log(err)
+  try {
+     // メインタスク取得
+    const mainTasks: TaskDetail[] = await db.select(
+      "SELECT id, name, descript, status, deadline, note, priority, created_at FROM tasks WHERE id = $1",
+      [taskId]
+    )
+    taskDetail.value = mainTasks[0]
+    getSubTasks(taskId)
+  } catch (err) {
     errDialog.value = true
-  })
-  taskDetail.value = mainTasks[0]
-
-  getSubTasks(taskId)
+  }
 }
 
 // サブタスク
