@@ -109,36 +109,27 @@
             density="compact"
             class="my-n2"
           >
-            <table class="d-flex flex-row">
-              <tr>
-                <td>
-                  <v-checkbox
-                    v-model="subTask.status"
-                    color="success"
-                    density="compact"
-                    value="done"
-                    :hide-details="true"
-                    style="font-size: 10px;"
-                    @change="updateSubTask(subTask.id, subTask.status)"
-                  ></v-checkbox>
-                </td>
-                <td>
-                  <span style="font-size:small;">
-                    {{ subTask.name }}
-                  </span>
-                </td>
-                <td>
-                  <v-btn
-                    color="error"
-                    icon="mdi-trash-can"
-                    variant="text"
-                    density="compact"
-                    size="small"
-                    @click="deleteSubTask(subTask.id, taskDetail.id)"
-                  ></v-btn>
-                </td>
-              </tr>
-            </table>
+            <div class="d-flex justify-start">
+              <input
+                class="mr-2"
+                type="checkbox"
+                id="sub-task"
+                :value="true"
+                v-model="subTask.isDone"
+                @change="updateSubTask(subTask.id, subTask.isDone)"
+              >
+              <span class="mr-1" style="font-size:small;">
+                {{ subTask.name }}
+              </span>
+              <v-btn
+                color="error"
+                icon="mdi-trash-can"
+                variant="text"
+                density="compact"
+                size="small"
+                @click="deleteSubTask(subTask.id, taskDetail.id)"
+              ></v-btn>
+            </div>
           </v-list-item>
         </v-list>
       </v-card-text>
@@ -396,7 +387,7 @@ const taskDetail: Ref<TaskDetail> = ref({
 interface SubTask {
   id: number;
   name: string;
-  status: "" | "todo" | "done";
+  isDone: boolean;
 }
 
 async function getTaskDetail(taskId: number): Promise<void> {
@@ -417,14 +408,14 @@ async function getTaskDetail(taskId: number): Promise<void> {
 const subTasks: Ref<SubTask[]> = ref([{
   id: 0,
   name: "",
-  status: ""
+  isDone: false
 }])
 const subTasksSize: Ref<number> = ref(0)
 // // サブタスク取得
 async function getSubTasks(taskId: number) {
   try {
     const searchSubTasks: SubTask[] = await db.select(
-    "SELECT id, name, status FROM sub_tasks WHERE task_id = $1",
+    "SELECT id, name, is_done FROM sub_tasks WHERE task_id = $1",
     [taskId])
 
     subTasksSize.value = searchSubTasks.length
@@ -449,10 +440,11 @@ async function registSubTask(task_id: number) : Promise<void> {
   try {
     // Db更新処理
     await db.execute(
-      "INSERT INTO sub_tasks (name, status, task_id) VALUES ($1, 'todo', $2)",
+      "INSERT INTO sub_tasks (name, task_id) VALUES ($1, $2)",
       [registSubTaskName.value, task_id]
     )
     await getSubTasks(task_id)
+    registSubTaskName.value = ""
     registSubTaskDialog.value = false
   } catch (err) {
     console.log(err)
@@ -461,19 +453,13 @@ async function registSubTask(task_id: number) : Promise<void> {
 }
 
 // サブタスク更新処理
-async function updateSubTask(subTaskId: number, status: string): Promise<void> {
-  try {
-    let updateStatus = ''
-    if (status == 'done') {
-      updateStatus = 'done'
-    } else {
-      updateStatus = 'todo'
-    }
+async function updateSubTask(subTaskId: number, status: boolean): Promise<void> {
 
+  try {
     // Db更新処理
     await db.execute(
-      "UPDATE sub_tasks SET status = $1 WHERE id = $2",
-      [updateStatus, subTaskId]
+      "UPDATE sub_tasks SET is_done = $1 WHERE id = $2",
+      [status, subTaskId]
     )
   } catch (err) {
     console.log(err)
