@@ -147,6 +147,19 @@
         ></v-textarea>
       </v-card-text>
 
+      <v-card-text>
+        <div>
+          関連ファイル&nbsp;:&nbsp;
+          <v-btn
+            icon="mdi-plus"
+            variant="text"
+            density="compact"
+            size="small"
+            @click="console.log('test')"
+          ></v-btn>
+        </div>
+      </v-card-text>
+
       <v-card-actions max-width="300">
         <v-spacer></v-spacer>
         <v-btn variant="flat" color="red" append-icon="mdi-delete" text="タスク削除" @click="deleteConfirmDialog = true" />

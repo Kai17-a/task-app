@@ -30,3 +30,11 @@ create table if not exists sub_tasks(
   created_at datetime not null default (datetime('now', 'localtime')),
   updated_at datetime not null default (datetime('now', 'localtime'))
 );
+
+-- タスク関連ファイル()
+create table if not exists related_files(
+  id integer primary key autoincrement not null,
+  name text not null,
+  created_at datetime not null default (datetime('now', 'localtime')),
+  updated_at datetime not null default (datetime('now', 'localtime'))
+)
