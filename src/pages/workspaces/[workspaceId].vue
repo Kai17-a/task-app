@@ -26,14 +26,39 @@
       <template v-slot:append>
         <v-icon icon="mdi-close" :class="(pending) ? 'not-allowed' : ''" @click="closeRegistDialog"></v-icon>
       </template>
-      <v-card-text max-width="auto">
-        追加フォームがここに入る
-      </v-card-text>
-
-      <v-card-actions max-width="300">
-        <v-spacer></v-spacer>
-        <v-btn :loading="pending" variant="flat" color="primary" text="追加" @click="console.log('test')" />
-      </v-card-actions>
+      <v-form @submit.prevent>
+        <div class="ml-10 mr-10">
+          <div class="text-right">
+            {{ newTaskName.length }}&nbsp;/&nbsp;15
+          </div>
+          <v-text-field
+            v-model="newTaskName"
+            :rules="[v => !!v || 'タスク名は必須です']"
+            label="タスク名"
+            density="compact"
+            variant="outlined"
+            maxlength="15"
+            class="mb-3"
+          />
+            <v-text-field
+              v-model="newTaskDeadline"
+              label="期限"
+              type="date"
+              density="compact"
+              variant="outlined"
+              class=""
+              width="170"
+            />
+          <div class="text-right">
+            {{ newTaskDescript.length }}&nbsp;/&nbsp;15
+          </div>
+          <v-textarea label="説明" variant="outlined" rows="1" v-model="newTaskDescript" />
+        </div>
+        <v-card-actions max-width="300">
+          <v-spacer></v-spacer>
+          <v-btn type="submit" variant="flat" color="primary" text="追加" @click="addTask " />
+        </v-card-actions>
+      </v-form>
     </v-card>
   </v-dialog>
 
@@ -415,6 +440,25 @@ async function getTaskDetail(taskId: number): Promise<void> {
     taskDetail.value = mainTasks[0]
     getSubTasks(taskId)
   } catch (err) {
+    errDialog.value = true
+  }
+}
+
+// タスク登録
+const newTaskName: Ref<string> = ref("")
+const newTaskDescript: Ref<string> = ref("")
+const newTaskDeadline: Ref<string> = ref("")
+async function addTask(): Promise<void> {
+  try {
+    // Db更新処理
+    await db.execute(
+      "INSERT INTO tasks (name, descript, status, workspace_id, deadline) VALUES ($1, $2, 'todo', $3, $4)",
+      [newTaskName.value, newTaskDescript.value, workspaceId, newTaskDeadline.value]
+    )
+    getTaskList()
+    registDialog.value = false
+  } catch (err) {
+    console.log(err)
     errDialog.value = true
   }
 }
