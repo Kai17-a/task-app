@@ -46,7 +46,7 @@
               type="date"
               density="compact"
               variant="outlined"
-              class=""
+              class="mt-5"
               width="170"
             />
           <div class="text-right">
@@ -249,6 +249,11 @@
 </template>
 <script lang="ts" setup>
 import Database from "tauri-plugin-sql-api"
+import type { Task } from '~/types/task'
+import type { TaskList } from '~/types/taskList'
+import type { TaskDetail } from '~/types/taskDetail'
+import type { SubTask } from '~/types/subTask'
+import type { WorkspaceName } from '~/types/workspace'
 
 const route = useRoute()
 const workspaceId = route.params.workspaceId
@@ -287,14 +292,12 @@ async function deleteTask(id: number) {
 }
 
 // ワークスペース名
-interface Workspace {
-  name: string;
-}
+
 const workspaceName: Ref<string> = ref("")
 await getWorkspacesName(Number(workspaceId))
 async function getWorkspacesName(workspaceId: number) {
   try {
-    const workspaces: Workspace[] = await db.select(
+    const workspaces: WorkspaceName[] = await db.select(
       "SELECT name FROM workspaces WHERE id = $1",
       [workspaceId]
     )
@@ -302,35 +305,6 @@ async function getWorkspacesName(workspaceId: number) {
   } catch (err) {
     errDialog.value = true
   }
-}
-
-interface Task {
-  id: number;
-  name: string;
-  descript: string;
-  status: 'todo' | 'working' | 'waiting' | 'done';
-  deadline: string;
-  priority: 'low' | 'mid' | 'high';
-  subTasks: string[];
-}
-
-interface TaskList {
-  todo: {
-    value: string;
-    data: Task[];
-  };
-  working: {
-    value: string;
-    data: Task[];
-  };
-  waiting: {
-    value: string;
-    data: Task[];
-  };
-  done: {
-    value: string;
-    data: Task[];
-  };
 }
 
 const tasksSize: Ref<number> = ref(0)
@@ -402,16 +376,6 @@ async function getTaskList(): Promise<void> {
 }
 
 // タスク詳細取得
-interface TaskDetail {
-  id: number;
-  name: string;
-  descript: string;
-  status: string;
-  deadline: string;
-  note: string;
-  priority: string;
-  created_at: string;
-}
 const taskDetail: Ref<TaskDetail> = ref({
   id: 0,
   name: "",
@@ -422,13 +386,6 @@ const taskDetail: Ref<TaskDetail> = ref({
   priority: "",
   created_at: "",
 })
-
-
-interface SubTask {
-  id: number;
-  name: string;
-  is_done: boolean;
-}
 
 async function getTaskDetail(taskId: number): Promise<void> {
   try {

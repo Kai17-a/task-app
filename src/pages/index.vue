@@ -97,27 +97,13 @@
 </template>
 <script lang="ts" setup>
 import Database from "tauri-plugin-sql-api"
+import type { WorkSpace } from '~/types/workspace'
+import type { AggregatedTask } from '~/types/task'
 
 const registWorkspaceDialog: Ref<boolean> = ref(false)
 const registPending: Ref<boolean> = ref(false)
 
-interface WorkSpace {
-  id: number;
-  count: number;
-  name: string;
-  descript: string;
-  status: string;
-}
-
-interface AggregatedTask {
-    id: number;
-    name: string;
-    descript: string;
-    statuses: { status: string; count: number; }[];
-}
-
 const db = await Database.load("sqlite:task_app.db")
-
 
 const aggregatedData: Ref<AggregatedTask[]> = ref([])
 const workspacesSize: Ref<number> = ref(0)
