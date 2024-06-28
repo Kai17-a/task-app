@@ -19,7 +19,7 @@
               </div>
               <v-text-field
                 v-model="newWorkspaceName"
-                :rules="rules"
+                :rules="[v => !!v || 'ワークスペース名は必須です']"
                 label="ワークスペース名"
                 density="compact"
                 variant="outlined"
@@ -151,12 +151,6 @@ async function getWorkspaces(): Promise<void> {
 const newWorkspaceName: Ref<string> = ref("")
 const newWorkspaceDescript: Ref<string> = ref("")
 const registErrDialog: Ref<boolean> = ref(false)
-const rules = [
-  (value: string): boolean | string => {
-    if (value != "") return true
-    return "ワークスペース名は必須です"
-  }
-]
 async function addWorkSpace() {
   if (!newWorkspaceName.value) return
 
