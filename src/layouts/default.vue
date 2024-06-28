@@ -19,7 +19,7 @@
           <template v-slot:title>
             <span
               class="d-flex justify-center menu-title "
-              style="font-size: large;"
+              style="font-size: 16px;"
             >
               {{ workspace.name.substring(0,1) }}
             </span>
