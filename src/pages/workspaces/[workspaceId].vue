@@ -203,20 +203,12 @@
     </v-card>
   </v-dialog>
 
-  <v-dialog v-model="errDialog" width="450">
-    <v-card title="エラー" color="red-lighten-5">
-      <template v-slot:append>
-        <v-icon icon="mdi-close" @click="errDialog = false"></v-icon>
-      </template>
-      <v-card-text max-width="auto">
-        <p>登録に失敗しました。</p>
-        以下の確認をしてください。
-        <li>ワークスペース名が重複していない</li>
-        <br>
-        <p>それ以外の場合は開発者に聞いてね(/・ω・)/</p>
-      </v-card-text>
-    </v-card>
-  </v-dialog>
+  <ErrorDialog
+    v-model="errDialog"
+    :subTitle="error.subTitle"
+    :items="error.items"
+    @close="errDialog = false"
+  />
 
   <v-dialog v-model="registSubTaskDialog" width="300">
     <v-card title="サブタスク追加">
@@ -254,13 +246,15 @@ import type { TaskList } from '~/types/taskList'
 import type { TaskDetail } from '~/types/taskDetail'
 import type { SubTask } from '~/types/subTask'
 import type { WorkspaceName } from '~/types/workspace'
+import type { Error } from '~/types/error'
 
 const route = useRoute()
 const workspaceId = route.params.workspaceId
 const searchValue: Ref<string> = ref("");
 const registDialog: Ref<boolean> = ref(false)
 const errDialog: Ref<boolean> = ref(false)
-  const pending: Ref<boolean> = ref(false)
+const error: Ref<Error> = ref({subTitle: "", items:[]})
+const pending: Ref<boolean> = ref(false)
 
 const db = await Database.load("sqlite:task_app.db")
 
@@ -286,8 +280,9 @@ async function deleteTask(id: number) {
     detailDialog.value = false
     pending.value = true
   } catch (err) {
-    console.log(err)
     errDialog.value = true
+    error.value.subTitle = "タスクの削除に失敗しました。"
+    error.value.items = [""]
   }
 }
 
@@ -304,6 +299,8 @@ async function getWorkspacesName(workspaceId: number) {
     workspaceName.value = workspaces[0].name
   } catch (err) {
     errDialog.value = true
+    error.value.subTitle = "ワークスペース名の取得に失敗しました。"
+    error.value.items = [""]
   }
 }
 
@@ -372,6 +369,8 @@ async function getTaskList(): Promise<void> {
     taskList.value.done.data = doneTasks.value
   } catch (err) {
     errDialog.value = true
+    error.value.subTitle = "タスクの取得に失敗しました。"
+    error.value.items = [""]
   }
 }
 
@@ -398,6 +397,8 @@ async function getTaskDetail(taskId: number): Promise<void> {
     getSubTasks(taskId)
   } catch (err) {
     errDialog.value = true
+    error.value.subTitle = "タスク詳細の取得に失敗しました。"
+    error.value.items = [""]
   }
 }
 
@@ -415,8 +416,9 @@ async function addTask(): Promise<void> {
     getTaskList()
     registDialog.value = false
   } catch (err) {
-    console.log(err)
     errDialog.value = true
+    error.value.subTitle = "タスクの登録に失敗しました。"
+    error.value.items = [""]
   }
 }
 
@@ -441,6 +443,8 @@ async function getSubTasks(taskId: number) {
     }
   } catch (err) {
     errDialog.value = true
+    error.value.subTitle = "サブタスクの取得に失敗しました。"
+    error.value.items = [""]
   }
 }
 
@@ -463,7 +467,8 @@ async function registSubTask(task_id: number) : Promise<void> {
     registSubTaskName.value = ""
     registSubTaskDialog.value = false
   } catch (err) {
-    console.log(err)
+    error.value.subTitle = "サブタスクの登録に失敗しました。"
+    error.value.items = [""]
     errDialog.value = true
   }
 }
@@ -478,8 +483,9 @@ async function updateSubTask(subTaskId: number, status: boolean): Promise<void> 
       [status, subTaskId]
     )
   } catch (err) {
-    console.log(err)
     errDialog.value = true
+    error.value.subTitle = "サブタスクの更新に失敗しました。"
+    error.value.items = [""]
   }
 }
 
@@ -493,8 +499,9 @@ async function deleteSubTask(subTaskId: number, task_id: number): Promise<void> 
     )
     getSubTasks(task_id)
   } catch (err) {
-    console.log(err)
     errDialog.value = true
+    error.value.subTitle = "サブタスクの削除に失敗しました。"
+    error.value.items = [""]
   }
 }
 
@@ -515,6 +522,8 @@ async function deleteWorkspace(): Promise<void> {
     "DELETE FROM workspaces WHERE id = $1", [workspaceId]
   ).catch((err) => {
     errDialog.value = true
+    error.value.subTitle = "ワークスペースの削除に失敗しました。"
+    error.value.items = [""]
   })
   deleteDialog.value = false
   pending.value = false

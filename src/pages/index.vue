@@ -38,20 +38,13 @@
           </v-form>
         </v-card>
       </v-dialog>
-      <v-dialog v-model="registErrDialog" width="450">
-        <v-card title="エラー" color="red-lighten-5">
-          <template v-slot:append>
-            <v-icon icon="mdi-close" @click="registErrDialog = false"></v-icon>
-          </template>
-          <v-card-text max-width="auto">
-            <p>登録に失敗しました。</p>
-            以下の確認をしてください。
-            <li>ワークスペース名が重複していない</li>
-            <br>
-            <p>それ以外の場合は開発者に聞いてね(/・ω・)/</p>
-          </v-card-text>
-        </v-card>
-      </v-dialog>
+
+      <ErrorDialog
+        v-model="registErrDialog"
+        :subTitle="error.subTitle"
+        :items="error.items"
+        @close="registErrDialog = false"
+      />
 
       <v-row>
         <v-col v-for="workspace in aggregatedData" md="4">
@@ -84,6 +77,7 @@
 import Database from "tauri-plugin-sql-api"
 import type { WorkSpace } from '~/types/workspace'
 import type { AggregatedTask } from '~/types/task'
+import type { Error } from '~/types/error'
 
 const registWorkspaceDialog: Ref<boolean> = ref(false)
 const registPending: Ref<boolean> = ref(false)
@@ -151,6 +145,7 @@ async function getWorkspaces(): Promise<void> {
 const newWorkspaceName: Ref<string> = ref("")
 const newWorkspaceDescript: Ref<string> = ref("")
 const registErrDialog: Ref<boolean> = ref(false)
+const error: Ref<Error> = ref({subTitle: "", items:[]})
 async function addWorkSpace() {
   if (!newWorkspaceName.value) return
 
@@ -160,6 +155,8 @@ async function addWorkSpace() {
     [newWorkspaceName.value, newWorkspaceDescript.value]
   ).catch((err) => {
     registErrDialog.value = true
+    error.value.subTitle = "登録に失敗しました。"
+    error.value.items = ['ワークスペース名が重複していない']
   })
   await getWorkspaces()
   registPending.value = false
