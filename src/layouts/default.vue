@@ -54,7 +54,7 @@ interface WorkSpace {
 
 const db = await Database.load("sqlite:task_app.db")
 // ワークスペース取得
-const workspaces: WorkSpace[] = await db.select("SELECT id, name FROM workspaces WHERE updated_at")
+const workspaces: WorkSpace[] = await db.select("SELECT id, name FROM workspaces ORDER BY created_at, name")
 
 function checkPath(path: string): boolean {
   const route = useRoute()
