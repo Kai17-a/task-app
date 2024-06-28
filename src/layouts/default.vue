@@ -31,12 +31,12 @@
         <v-list-item :active="false" prepend-icon="mdi-plus-circle-outline" value="add">
           <v-tooltip activator="parent" location="start">ワークスペース追加</v-tooltip>
         </v-list-item>
-        <v-divider class="mb-1"></v-divider>
+        <!-- <v-divider class="mb-1"></v-divider> -->
 
         <!-- 設定 -->
-        <v-list-item :active="false" prepend-icon="mdi-cog" value="setting">
+        <!-- <v-list-item :active="false" prepend-icon="mdi-cog" value="setting">
           <v-tooltip activator="parent" location="start">設定</v-tooltip>
-        </v-list-item>
+        </v-list-item> -->
       </v-list>
     </v-navigation-drawer>
     <v-main class="mx-5 mt-5">
