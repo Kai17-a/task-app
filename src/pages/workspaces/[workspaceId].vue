@@ -17,7 +17,7 @@
       <v-btn variant="flat" color="primary" @click="registDialog = true">タスク追加</v-btn>
     </v-col>
     <v-col cols="auto">
-      <v-btn variant="flat" color="error" @click="deleteDialog = true">ワークスペース削除</v-btn>
+      <v-btn variant="flat" color="error" @click="deleteWorkspaceDialog = true">ワークスペース削除</v-btn>
     </v-col>
   </v-row>
 
@@ -63,11 +63,11 @@
   </v-dialog>
 
   <ConfirmDialog
-    v-model="deleteDialog"
+    v-model="deleteWorkspaceDialog"
     title="ワークスペース削除"
     message="このワークスペースを削除しますか？"
     btn-color="error"
-    @close="deleteDialog = false"
+    @close="deleteWorkspaceDialog = false"
     @func="deleteWorkspace"
   />
 
@@ -182,17 +182,17 @@
 
       <v-card-actions max-width="300">
         <v-spacer></v-spacer>
-        <v-btn variant="flat" color="red" append-icon="mdi-delete" text="タスク削除" @click="deleteConfirmDialog = true" />
+        <v-btn variant="flat" color="red" append-icon="mdi-delete" text="タスク削除" @click="deleteTaskDialog = true" />
       </v-card-actions>
     </v-card>
   </v-dialog>
 
   <ConfirmDialog
-    v-model="deleteConfirmDialog"
+    v-model="deleteTaskDialog"
     title="タスク削除"
     message="このタスクを削除しますか？"
     btn-color="error"
-    @close="deleteConfirmDialog = false"
+    @close="deleteTaskDialog = false"
     @func="deleteTask(openTaskId)"
   />
 
@@ -260,7 +260,7 @@ function closeRegistDialog() {
 }
 
 // タスク削除
-const deleteConfirmDialog: Ref<boolean> = ref(false)
+const deleteTaskDialog: Ref<boolean> = ref(false)
 async function deleteTask(id: number) {
   try {
     pending.value = true
@@ -269,7 +269,7 @@ async function deleteTask(id: number) {
       [id]
     )
     await getTaskList()
-    deleteConfirmDialog.value = false
+    deleteTaskDialog.value = false
     detailDialog.value = false
     pending.value = true
   } catch (err) {
@@ -507,8 +507,8 @@ async function detailDialogOpen(id: number) {
   detailDialog.value = true
 }
 
-// 削除処理
-const deleteDialog: Ref<boolean> = ref(false)
+// ワークスペース削除処理
+const deleteWorkspaceDialog: Ref<boolean> = ref(false)
 async function deleteWorkspace(): Promise<void> {
   pending.value = true
   await db.execute(
@@ -518,7 +518,7 @@ async function deleteWorkspace(): Promise<void> {
     error.value.subTitle = "ワークスペースの削除に失敗しました。"
     error.value.items = [""]
   })
-  deleteDialog.value = false
+  deleteWorkspaceDialog.value = false
   pending.value = false
 
   navigateTo('/')
