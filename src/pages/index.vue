@@ -54,6 +54,7 @@
             min-width="200"
             :subtitle="workspace.descript"
             :title="workspace.name"
+            color="#fdfdfd"
             hover
             @click="navigateTo(`/workspaces/${workspace.id}`)"
           >
