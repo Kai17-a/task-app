@@ -97,7 +97,7 @@
       </v-sheet>
     </v-col>
   </v-row>
-  <v-row velse class="mt-6 tasks">
+  <v-row v-else class="mt-6 tasks">
     <v-col>
       <h2 class="text-disabled">タスクが存在しません。</h2>
     </v-col>
