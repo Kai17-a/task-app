@@ -106,12 +106,12 @@
     </v-col>
   </v-row>
 
-  <v-dialog v-model="detailDialog" width="600">
-    <v-card :subtitle="taskDetail.descript">
+  <v-dialog v-model="detailDialog" scrollable width="600">
+    <v-card :subtitle="taskDetail.descript" min-height="100" max-height="600">
       <template v-slot:title>
         <div class="d-flex align-center">
           {{ taskDetail.name }}
-          <v-chip variant="flat" density="compact" :color="getStatusColor(taskDetail.status)">
+          <v-chip class="ml-2" variant="flat" density="compact" :color="getStatusColor(taskDetail.status)">
             {{ getStatusName(taskDetail.status) }}
           </v-chip>
         </div>
@@ -120,7 +120,7 @@
         <v-icon icon="mdi-close" :class="(pending) ? 'not-allowed' : ''" @click="detailDialog = false"></v-icon>
       </template>
 
-      <v-card-text>
+      <v-card-text max-height="400">
         <div>
           サブタスク&nbsp;:&nbsp;
           <v-btn
@@ -160,10 +160,8 @@
             </div>
           </v-list-item>
         </v-list>
-      </v-card-text>
 
-      <v-card-text class="mt-n5" max-width="auto">
-        <div class="mb-1">メモ&nbsp;:</div>
+        <div class="mt-3 mb-1">メモ&nbsp;:</div>
         <v-sheet v-if="true" class="pa-3" min-height="150" color="#fefefe" :rounded="true" border>
           {{ taskDetail.note }}
         </v-sheet>
@@ -173,10 +171,8 @@
           variant="outlined"
           disabled
         ></v-textarea>
-      </v-card-text>
 
-      <v-card-text>
-        <div>
+        <div class="mt-5">
           関連ファイル&nbsp;:&nbsp;
           <v-btn
             icon="mdi-plus"
@@ -187,7 +183,6 @@
           ></v-btn>
         </div>
       </v-card-text>
-
       <v-card-actions max-width="300">
         <v-spacer></v-spacer>
         <v-btn variant="flat" color="red" append-icon="mdi-delete" text="タスク削除" @click="deleteTaskDialog = true" />
