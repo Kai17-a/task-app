@@ -1,4 +1,12 @@
 <template>
+  <div class="mx-n4 my-n1">
+    <v-breadcrumbs :items="breadcrumbsItems" density="compact">
+      <template v-slot:divider>
+        <v-icon icon="mdi-chevron-right"></v-icon>
+      </template>
+    </v-breadcrumbs>
+  </div>
+
   <h1>{{ workspaceName }}</h1>
   <v-row class="mt-3">
     <v-col cols="4" class="me-auto">
@@ -280,7 +288,6 @@ async function deleteTask(id: number) {
 }
 
 // ワークスペース名
-
 const workspaceName: Ref<string> = ref("")
 await getWorkspacesName(Number(workspaceId))
 async function getWorkspacesName(workspaceId: number) {
@@ -296,6 +303,19 @@ async function getWorkspacesName(workspaceId: number) {
     error.value.items = [""]
   }
 }
+
+const breadcrumbsItems = [
+  {
+    title: 'ワークスペース一覧',
+    disabled: false,
+    href: '/',
+  },
+  {
+    title: workspaceName.value,
+    disabled: true,
+    href: '',
+  },
+]
 
 const tasksSize: Ref<number> = ref(0)
 const todoTasks: Ref<Task[]> = ref([])
