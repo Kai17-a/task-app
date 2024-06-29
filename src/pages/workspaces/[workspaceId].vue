@@ -62,19 +62,14 @@
     </v-card>
   </v-dialog>
 
-  <v-dialog v-model="deleteDialog" width="350" :persistent="pending">
-    <v-card title="タスク追加">
-      <v-card-text max-width="auto">
-        このワークスペースを削除しますか？
-      </v-card-text>
-
-      <v-card-actions max-width="300">
-        <v-spacer></v-spacer>
-        <v-btn :disabled="pending" variant="outlined" color="error" text="キャンセル" @click="deleteDialog = false" />
-        <v-btn :loading="pending" variant="flat" color="error" text="削除" @click="deleteWorkspace" />
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
+  <ConfirmDialog
+    v-model="deleteDialog"
+    title="ワークスペース削除"
+    message="このワークスペースを削除しますか？"
+    btn-color="error"
+    @close="deleteDialog = false"
+    @func="deleteWorkspace"
+  />
 
   <v-row v-if="tasksSize != 0" class="mt-4 tasks">
     <v-col v-for="task in taskList" cols="3">
@@ -191,17 +186,15 @@
       </v-card-actions>
     </v-card>
   </v-dialog>
-  <v-dialog v-model="deleteConfirmDialog" width="300">
-    <v-card>
-      <v-card-text max-width="auto">
-        本当に削除しますか？
-      </v-card-text>
-      <v-card-actions max-width="300">
-        <v-spacer></v-spacer>
-        <v-btn variant="flat" color="red" append-icon="mdi-delete" text="削除" @click="deleteTask(openTaskId)" />
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
+
+  <ConfirmDialog
+    v-model="deleteConfirmDialog"
+    title="タスク削除"
+    message="このタスクを削除しますか？"
+    btn-color="error"
+    @close="deleteConfirmDialog = false"
+    @func="deleteTask(openTaskId)"
+  />
 
   <ErrorDialog
     v-model="errDialog"
