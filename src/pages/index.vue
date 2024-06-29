@@ -160,6 +160,8 @@ async function addWorkSpace() {
     error.value.items = ['ワークスペース名が重複していない']
   })
   await getWorkspaces()
+  newWorkspaceName.value = ""
+  newWorkspaceDescript.value = ""
   registPending.value = false
   registWorkspaceDialog.value = false
 }
