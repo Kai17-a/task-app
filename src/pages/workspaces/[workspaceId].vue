@@ -272,6 +272,7 @@ import type { TaskDetail } from '~/types/taskDetail'
 import type { SubTask } from '~/types/subTask'
 import type { WorkspaceName } from '~/types/workspace'
 import type { Error } from '~/types/error'
+import type { TaskFile } from '~/types/taskFile'
 
 const route = useRoute()
 const workspaceId = route.params.workspaceId
@@ -328,10 +329,6 @@ async function registFile(fileName: string, taskId: number) {
   }
 }
 
-interface TaskFile {
-  id: number;
-  name: string;
-}
 const taskFiles: Ref<TaskFile[]> = ref([])
 const taskFilesSize: Ref<number> = ref(0)
 async function getTaskFiles(taskId: number): Promise<void> {
@@ -542,11 +539,7 @@ async function addTask(): Promise<void> {
 }
 
 // サブタスク
-const subTasks: Ref<SubTask[]> = ref([{
-  id: 0,
-  name: "",
-  is_done: false
-}])
+const subTasks: Ref<SubTask[]> = ref([])
 const subTasksSize: Ref<number> = ref(0)
 // // サブタスク取得
 async function getSubTasks(taskId: number) {
