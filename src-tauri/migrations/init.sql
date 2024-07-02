@@ -35,6 +35,7 @@ create table if not exists sub_tasks(
 create table if not exists related_files(
   id integer primary key autoincrement not null,
   name text not null,
+  task_id integer not null,
   created_at datetime not null default (datetime('now', 'localtime')),
   updated_at datetime not null default (datetime('now', 'localtime'))
 )
