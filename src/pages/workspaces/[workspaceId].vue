@@ -179,8 +179,33 @@
             variant="text"
             density="compact"
             size="small"
-            @click="console.log('test')"
+            @click="saveFile(taskDetail.id)"
           ></v-btn>
+          <v-list v-if="taskFilesSize !== 0">
+            <v-list-item
+              v-for="taskFile in taskFiles"
+              density="compact"
+              class="my-n2"
+            >
+              <div class="d-flex justify-start">
+                <span
+                  class="mr-1 text-blue-darken-3 task-file text-decoration-underline"
+                  style="font-size:small;"
+                  @click="downloadTaskFile(taskFile.name)"
+                >
+                  {{ taskFile.name }}
+                </span>
+                <v-btn
+                  color="error"
+                  icon="mdi-trash-can"
+                  variant="text"
+                  density="compact"
+                  size="small"
+                  @click="deleteTaskFile(taskFile.id, taskFile.name, taskDetail.id)"
+                ></v-btn>
+              </div>
+            </v-list-item>
+        </v-list>
         </div>
       </v-card-text>
       <v-card-actions max-width="300">
@@ -237,6 +262,10 @@
 </template>
 <script lang="ts" setup>
 import Database from "tauri-plugin-sql-api"
+import { open, save } from "@tauri-apps/api/dialog"
+{/* @ts-ignore */}
+import { invoke } from '@tauri-apps/api/tauri'
+import { appDataDir } from '@tauri-apps/api/path'
 import type { Task } from '~/types/task'
 import type { TaskList } from '~/types/taskList'
 import type { TaskDetail } from '~/types/taskDetail'
@@ -253,6 +282,87 @@ const error: Ref<Error> = ref({subTitle: "", items:[]})
 const pending: Ref<boolean> = ref(false)
 
 const db = await Database.load("sqlite:task_app.db")
+
+async function downloadTaskFile(fileName: string) {
+  const appDataDirPath = await appDataDir();
+  const targetFileName = `${appDataDirPath}files/${fileName}`
+  await save({ defaultPath: targetFileName });
+}
+
+{/* @ts-ignore */}
+const invoke = window.__TAURI__.invoke
+async function saveFile(taskId: number) {
+  open().then(async (files) => {
+    if (typeof files === 'string') {
+      const paths: string[] = files.split("\\")
+      const filename = paths[paths.length - 1]
+      const fileNameArr = filename.split(".")
+      const expand = fileNameArr[fileNameArr.length - 1]
+      if (['AAA'].includes(expand)) {
+        // 将来のエラー用
+        console.log("想定外の拡張子")
+      } else {
+        invoke('copy_file', { targetPath: files, fileName: paths[paths.length - 1]})
+        await registFile(filename, taskId)
+      }
+    }
+  }).catch(() => {
+    errDialog.value = true
+    error.value.subTitle = "ファイルの保存に失敗しました。"
+    error.value.items = [""]
+  })
+}
+
+async function registFile(fileName: string, taskId: number) {
+  try {
+    pending.value = true
+    await db.execute(
+      "INSERT INTO related_files(name, task_id) VALUES($1, $2)",
+      [fileName, taskId]
+    )
+    await getTaskFiles(taskId)
+    pending.value = true
+  } catch(err) {
+    errDialog.value = true
+    error.value.subTitle = "ファイル名のDBの保存に失敗しました。"
+  }
+}
+
+interface TaskFile {
+  id: number;
+  name: string;
+}
+const taskFiles: Ref<TaskFile[]> = ref([])
+const taskFilesSize: Ref<number> = ref(0)
+async function getTaskFiles(taskId: number): Promise<void> {
+  try {
+    pending.value = true
+    taskFiles.value = await db.select(
+      "SELECT id, name FROM related_files WHERE task_id = $1",
+      [taskId]
+    )
+    taskFilesSize.value = taskFiles.value.length
+    pending.value = true
+  } catch(err) {
+    errDialog.value = true
+    error.value.subTitle = "関連ファイルの取得に失敗しました。"
+  }
+}
+
+async function deleteTaskFile(fileId: number, fileName: string, taskId: number) {
+  try {
+    // Db更新処理
+    invoke('delete_file', { fileName: fileName})
+    await db.select(
+      "DELETE FROM related_files WHERE id = $1",
+      [fileId]
+    )
+    await getTaskFiles(taskId)
+  } catch (err) {
+    errDialog.value = true
+    error.value.subTitle = "関連ファイルの削除に失敗しました。"
+  }
+}
 
 function closeRegistDialog() {
   if (pending.value) {
@@ -402,7 +512,8 @@ async function getTaskDetail(taskId: number): Promise<void> {
       [taskId]
     )
     taskDetail.value = mainTasks[0]
-    getSubTasks(taskId)
+    await getSubTasks(taskId)
+    await getTaskFiles(taskId)
   } catch (err) {
     errDialog.value = true
     error.value.subTitle = "タスク詳細の取得に失敗しました。"
@@ -551,4 +662,9 @@ async function deleteWorkspace(): Promise<void> {
 .tasks {
   user-select: none;
 }
+
+.task-file {
+  cursor: pointer;
+}
+
 </style>
