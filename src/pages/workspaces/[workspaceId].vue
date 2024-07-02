@@ -322,11 +322,12 @@ async function registFile(fileName: string, taskId: number) {
       [fileName, taskId]
     )
     await getTaskFiles(taskId)
-    pending.value = true
+    pending.value = false
   } catch(err) {
     errDialog.value = true
     error.value.subTitle = "ファイル名のDBの保存に失敗しました。"
   }
+  pending.value = false
 }
 
 const taskFiles: Ref<TaskFile[]> = ref([])
@@ -339,11 +340,12 @@ async function getTaskFiles(taskId: number): Promise<void> {
       [taskId]
     )
     taskFilesSize.value = taskFiles.value.length
-    pending.value = true
+    pending.value = false
   } catch(err) {
     errDialog.value = true
     error.value.subTitle = "関連ファイルの取得に失敗しました。"
   }
+  pending.value = false
 }
 
 async function deleteTaskFile(fileId: number, fileName: string, taskId: number) {
@@ -381,12 +383,12 @@ async function deleteTask(id: number) {
     await getTaskList()
     deleteTaskDialog.value = false
     detailDialog.value = false
-    pending.value = true
   } catch (err) {
     errDialog.value = true
     error.value.subTitle = "タスクの削除に失敗しました。"
     error.value.items = [""]
   }
+  pending.value = false
 }
 
 // ワークスペース名
