@@ -6,12 +6,14 @@
       </template>
       <v-card-text max-width="auto">
         <p>{{ $props.subTitle }}</p>
-        以下の確認をしてください。
-        <div v-for="item in items">
-          <li>{{ item }}</li>
+        <div v-if="items.length !== 0">
+          以下の確認をしてください。
+          <div v-for="item in items">
+            <li>{{ item }}</li>
+          </div>
+          <br>
+          <p>それ以外の場合は開発者に聞いてね(/・ω・)/</p>
         </div>
-        <br>
-        <p>それ以外の場合は開発者に聞いてね(/・ω・)/</p>
       </v-card-text>
     </v-card>
   </v-dialog>
