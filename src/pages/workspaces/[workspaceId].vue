@@ -285,10 +285,6 @@ const pending: Ref<boolean> = ref(false)
 
 const db = await Database.load("sqlite:task_app.db")
 
-const appDataDirPath = await appDataDir()
-console.log(appDataDirPath)
-console.log(await exists(`${appDataDirPath}files/`))
-
 async function downloadTaskFile(fileName: string) {
   const appDataDirPath = await appDataDir()
   const downloadTargetPath = `${appDataDirPath}files/${fileName}`
@@ -305,18 +301,21 @@ async function downloadTaskFile(fileName: string) {
 const invoke = window.__TAURI__.invoke
 async function saveFile(taskId: number): Promise<void> {
   const appDataDirPath = await appDataDir()
-  const saveDirName = `${appDataDirPath}files/${workspaceName.value}/${taskDetail.value.name}/`
-  if (!await exists(saveDirName)) {
-    await createDir(saveDirName)
+  const saveDirPath = `${appDataDirPath}files/`
+  const saveDirWorkspaceTaskPath = `${appDataDirPath}files/${workspaceName.value}/${taskDetail.value.name}/`
+  if (!await exists(saveDirWorkspaceTaskPath)) {
+    await createDir(saveDirPath)
+    await createDir(`${saveDirPath}${workspaceName.value}/`)
+    await createDir(`${saveDirPath}${workspaceName.value}/${taskDetail.value.name}/`)
   }
-  open().then(async (files) => {
+  await open().then(async (files) => {
     if (typeof files === 'string') {
       const paths: string[] = files.split("\\")
       const filename = paths[paths.length - 1]
       const fileNameArr = filename.split(".")
       const expand = fileNameArr[fileNameArr.length - 1]
 
-      if (await exists(`${saveDirName}${filename}`)) {
+      if (await exists(`${saveDirWorkspaceTaskPath}${filename}`)) {
         errDialog.value = true
         error.value.subTitle = "同じ名前のファイルが既に存在します。"
         return
@@ -326,7 +325,7 @@ async function saveFile(taskId: number): Promise<void> {
         // 将来のエラー用
         console.log("想定外の拡張子")
       } else {
-        await copyFile(files, `${saveDirName}${filename}`)
+        await copyFile(files, `${saveDirWorkspaceTaskPath}${filename}`)
         await registFile(filename, taskId)
       }
     }
