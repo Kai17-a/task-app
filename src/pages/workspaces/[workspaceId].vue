@@ -265,7 +265,8 @@ import Database from "tauri-plugin-sql-api"
 import { open, save } from "@tauri-apps/api/dialog"
 {/* @ts-ignore */}
 import { invoke } from '@tauri-apps/api/tauri'
-import { appDataDir } from '@tauri-apps/api/path'
+import { appDataDir, downloadDir } from '@tauri-apps/api/path'
+import { exists, createDir, copyFile, BaseDirectory } from '@tauri-apps/api/fs';
 import type { Task } from '~/types/task'
 import type { TaskList } from '~/types/taskList'
 import type { TaskDetail } from '~/types/taskDetail'
@@ -284,30 +285,53 @@ const pending: Ref<boolean> = ref(false)
 
 const db = await Database.load("sqlite:task_app.db")
 
+const appDataDirPath = await appDataDir()
+console.log(appDataDirPath)
+console.log(await exists(`${appDataDirPath}files/`))
+
 async function downloadTaskFile(fileName: string) {
-  const appDataDirPath = await appDataDir();
-  const targetFileName = `${appDataDirPath}files/${fileName}`
-  await save({ defaultPath: targetFileName });
+  const appDataDirPath = await appDataDir()
+  const downloadTargetPath = `${appDataDirPath}files/${fileName}`
+  const downloadDirectoryPath = await downloadDir()
+  await save({ defaultPath: downloadDirectoryPath }).then(async (dir) => {
+    if (typeof dir === 'string') {
+      console.log(dir)
+    }
+  })
+
 }
 
 {/* @ts-ignore */}
 const invoke = window.__TAURI__.invoke
-async function saveFile(taskId: number) {
+async function saveFile(taskId: number): Promise<void> {
+  const appDataDirPath = await appDataDir()
+  const saveDirName = `${appDataDirPath}files/${workspaceName.value}/${taskDetail.value.name}/`
+  if (!await exists(saveDirName)) {
+    await createDir(saveDirName)
+  }
   open().then(async (files) => {
     if (typeof files === 'string') {
       const paths: string[] = files.split("\\")
       const filename = paths[paths.length - 1]
       const fileNameArr = filename.split(".")
       const expand = fileNameArr[fileNameArr.length - 1]
+
+      if (await exists(`${saveDirName}${filename}`)) {
+        errDialog.value = true
+        error.value.subTitle = "同じ名前のファイルが既に存在します。"
+        return
+      }
+
       if (['AAA'].includes(expand)) {
         // 将来のエラー用
         console.log("想定外の拡張子")
       } else {
-        invoke('copy_file', { targetPath: files, fileName: paths[paths.length - 1]})
+        await copyFile(files, `${saveDirName}${filename}`)
         await registFile(filename, taskId)
       }
     }
-  }).catch(() => {
+  }).catch((err) => {
+    console.log(err)
     errDialog.value = true
     error.value.subTitle = "ファイルの保存に失敗しました。"
     error.value.items = [""]

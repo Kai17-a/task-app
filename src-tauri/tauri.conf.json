@@ -20,7 +20,16 @@
       "fs": {
         "all": false,
         "readFile": true,
-        "writeFile": true
+        "writeFile": true,
+        "copyFile": true,
+        "createDir": true,
+        "exists": true,
+        "scope": [
+          "$APPDATA/**",
+          "$APPDATA/*",
+          "$APPDATA/",
+          "$APPDATA"
+        ]
       },
       "dialog": {
         "all": false,
