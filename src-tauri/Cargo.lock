@@ -3497,6 +3497,7 @@ name = "tauri-app"
 version = "0.0.0"
 dependencies = [
  "directories",
+ "filetime",
  "serde",
  "serde_json",
  "tauri",

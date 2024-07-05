@@ -205,7 +205,16 @@
                 ></v-btn>
               </div>
             </v-list-item>
-        </v-list>
+          </v-list>
+          <v-snackbar
+            v-model="downloadSnackbar"
+            :timeout="2000"
+            color="primary"
+            class="text-center"
+          >
+            ファイルを保存しました。<br/>
+            {{ downloadFilePath }}
+          </v-snackbar>
         </div>
       </v-card-text>
       <v-card-actions max-width="300">
@@ -285,16 +294,19 @@ const pending: Ref<boolean> = ref(false)
 
 const db = await Database.load("sqlite:task_app.db")
 
+const downloadSnackbar: Ref<boolean> = ref(false)
+const downloadDirectoryPath = await downloadDir()
 async function downloadTaskFile(fileName: string) {
   const appDataDirPath = await appDataDir()
-  const downloadTargetPath = `${appDataDirPath}files/${fileName}`
-  const downloadDirectoryPath = await downloadDir()
-  await save({ defaultPath: downloadDirectoryPath }).then(async (dir) => {
-    if (typeof dir === 'string') {
-      console.log(dir)
-    }
-  })
+  const downloadTargetPath = `${appDataDirPath}files/${workspaceName.value}/${taskDetail.value.name}/${fileName}`
+  await invoke('download_file', { targetPath: downloadTargetPath, destination: `${downloadDirectoryPath}${fileName}`})
+  openDownloadSnackbar(fileName)
+}
 
+const downloadFilePath: Ref<string> = ref("")
+function openDownloadSnackbar(filename: string) {
+  downloadFilePath.value = `${downloadDirectoryPath}${filename}`
+  downloadSnackbar.value = true
 }
 
 {/* @ts-ignore */}

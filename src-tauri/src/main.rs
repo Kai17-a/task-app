@@ -8,31 +8,43 @@ fn greet(name: &str) -> String {
 }
 
 use std::fs;
+use std::path::Path;
+use std::time::{SystemTime};
+use filetime::{FileTime, set_file_times};
 #[tauri::command]
-fn copy_file(target_path: &str, file_name: &str) {
+fn upload_file(target_path: &str, file_name: &str) {
     let roming_path = get_roaming_path();
-    let _ = fs::create_dir_all(format!("{}/files/", roming_path.clone()));
-    fs::copy(target_path, format!("{}/files/{}", roming_path.clone(), file_name)).expect("failed");
+    let _ = fs::create_dir_all(format!("{}", roming_path.clone()));
+    fs::copy(target_path, format!("{}{}", roming_path.clone(), file_name)).expect("failed");
+}
+
+#[tauri::command]
+fn download_file(target_path: &str, destination: &str) {
+    let now = SystemTime::now();
+    let file_time = FileTime::from_system_time(now);
+    let path = Path::new(target_path);
+    let _ = set_file_times(path, file_time, file_time);
+    fs::copy(target_path, destination).expect("failed");
 }
 
 #[tauri::command]
 fn delete_file(file_name: &str) {
     let roming_path = get_roaming_path();
-    fs::remove_file(format!("{}/files/{}", roming_path.clone(), file_name)).expect("failed");
+    fs::remove_file(format!("{}{}", roming_path.clone(), file_name)).expect("failed");
 }
 
 use directories::BaseDirs;
 fn get_roaming_path() -> String {
     if let Some(base_dirs) = BaseDirs::new() {
         let config_dir = base_dirs.config_dir();
-        return format!("{}\\com.tauri.task-app\\", config_dir.to_string_lossy());
+        return format!("{}/com.tauri.task-app/files/", config_dir.to_string_lossy());
     }
     "".to_string()
 }
 
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![greet, copy_file, delete_file])
+        .invoke_handler(tauri::generate_handler![greet, upload_file, delete_file, download_file])
         .plugin(
             tauri_plugin_sql::Builder::default()
                 .add_migrations(
