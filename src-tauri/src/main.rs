@@ -9,7 +9,7 @@ fn greet(name: &str) -> String {
 
 use std::fs;
 use std::path::Path;
-use std::time::{SystemTime};
+use std::time::SystemTime;
 use filetime::{FileTime, set_file_times};
 #[tauri::command]
 fn upload_file(target_path: &str, file_name: &str) {
