@@ -23,6 +23,7 @@
         "writeFile": true,
         "copyFile": true,
         "createDir": true,
+        "removeFile": true,
         "exists": true,
         "scope": [
           "$APPDATA/**",

@@ -215,6 +215,14 @@
             ファイルを保存しました。<br/>
             {{ downloadFilePath }}
           </v-snackbar>
+          <v-snackbar
+            v-model="deleteSnackbar"
+            :timeout="2000"
+            color="error"
+            class="text-center"
+          >
+            ファイルを削除しました。
+          </v-snackbar>
         </div>
       </v-card-text>
       <v-card-actions max-width="300">
@@ -275,7 +283,7 @@ import { open, save } from "@tauri-apps/api/dialog"
 {/* @ts-ignore */}
 import { invoke } from '@tauri-apps/api/tauri'
 import { appDataDir, downloadDir } from '@tauri-apps/api/path'
-import { exists, createDir, copyFile, BaseDirectory } from '@tauri-apps/api/fs';
+import { exists, createDir, copyFile, removeFile } from '@tauri-apps/api/fs';
 import type { Task } from '~/types/task'
 import type { TaskList } from '~/types/taskList'
 import type { TaskDetail } from '~/types/taskDetail'
@@ -294,11 +302,15 @@ const pending: Ref<boolean> = ref(false)
 
 const db = await Database.load("sqlite:task_app.db")
 
+async function getDownloadFilePath(fileName: string): Promise<string> {
+  const appDataDirPath = await appDataDir()
+  return `${appDataDirPath}files/${workspaceName.value}/${taskDetail.value.name}/${fileName}`
+}
+
 const downloadSnackbar: Ref<boolean> = ref(false)
 const downloadDirectoryPath = await downloadDir()
 async function downloadTaskFile(fileName: string) {
-  const appDataDirPath = await appDataDir()
-  const downloadTargetPath = `${appDataDirPath}files/${workspaceName.value}/${taskDetail.value.name}/${fileName}`
+  const downloadTargetPath = getDownloadFilePath(fileName)
   await invoke('download_file', { targetPath: downloadTargetPath, destination: `${downloadDirectoryPath}${fileName}`})
   openDownloadSnackbar(fileName)
 }
@@ -383,16 +395,20 @@ async function getTaskFiles(taskId: number): Promise<void> {
   pending.value = false
 }
 
+const deleteSnackbar: Ref<boolean> = ref(false)
 async function deleteTaskFile(fileId: number, fileName: string, taskId: number) {
   try {
+    const targetFilePath: string = await getDownloadFilePath(fileName)
     // Db更新処理
-    invoke('delete_file', { fileName: fileName})
+    await removeFile(targetFilePath)
     await db.select(
       "DELETE FROM related_files WHERE id = $1",
       [fileId]
     )
+    deleteSnackbar.value = true
     await getTaskFiles(taskId)
   } catch (err) {
+    console.log(err)
     errDialog.value = true
     error.value.subTitle = "関連ファイルの削除に失敗しました。"
   }
