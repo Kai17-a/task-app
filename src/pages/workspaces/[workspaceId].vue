@@ -64,7 +64,7 @@
         </div>
         <v-card-actions max-width="300">
           <v-spacer></v-spacer>
-          <v-btn type="submit" variant="flat" color="primary" text="追加" @click="addTask " />
+          <v-btn type="submit" variant="flat" color="primary" text="追加" @click="addTask" />
         </v-card-actions>
       </v-form>
     </v-card>
@@ -580,6 +580,7 @@ const newTaskName: Ref<string> = ref("")
 const newTaskDescript: Ref<string> = ref("")
 const newTaskDeadline: Ref<string> = ref("")
 async function addTask(): Promise<void> {
+  if (!newTaskName.value) return
   try {
     // Db更新処理
     await db.execute(
