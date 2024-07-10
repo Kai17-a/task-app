@@ -60,7 +60,15 @@
           <div class="text-right">
             {{ newTaskDescript.length }}&nbsp;/&nbsp;15
           </div>
-          <v-textarea label="説明" variant="outlined" rows="1" v-model="newTaskDescript" />
+          <v-text-field
+            v-model="newTaskName"
+            :rules="[v => !!v || '説明は必須です']"
+            label="説明"
+            density="compact"
+            variant="outlined"
+            maxlength="15"
+            class="mb-3"
+          />
         </div>
         <v-card-actions max-width="300">
           <v-spacer></v-spacer>
