@@ -87,7 +87,7 @@
           <v-card
             min-height="110"
             class="mx-3 my-3 bg-grey-lighten-4"
-            :text="datasktum.descript"
+            :subtitle="datasktum.descript"
             hover
             @mouseup="detailDialogOpen(datasktum.id)"
           >
@@ -96,7 +96,7 @@
                 <v-icon v-if="isOverDeadline(datasktum.deadline, datasktum.status)" color="warning" icon="mdi-alert" size="small"></v-icon>
               </div>
             </template>
-            <p class="text-body-2 text-right pr-1" :class="getOverDeadlineColor(isOverDeadline(datasktum.deadline, datasktum.status))">
+            <p v-if="datasktum.deadline !== ''" class="text-body-2 text-right pr-1" :class="getOverDeadlineColor(isOverDeadline(datasktum.deadline, datasktum.status))">
               期限：{{ datasktum.deadline }}
             </p>
           </v-card>
