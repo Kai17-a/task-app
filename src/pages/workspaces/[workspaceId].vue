@@ -87,13 +87,17 @@
           <v-card
             min-height="110"
             class="mx-3 my-3 bg-grey-lighten-4"
-            :title="datasktum.name"
             :text="datasktum.descript"
             hover
             @mouseup="detailDialogOpen(datasktum.id)"
           >
-            <p class="text-body-2 text-right text-red-lighten-1 pr-1" color="red">
-              {{ datasktum.deadline }}
+            <template v-slot:title>
+              <div :class="getOverDeadlineColor(isOverDeadline(datasktum.deadline, datasktum.status))">{{datasktum.name}}
+                <v-icon v-if="isOverDeadline(datasktum.deadline, datasktum.status)" color="warning" icon="mdi-alert" size="small"></v-icon>
+              </div>
+            </template>
+            <p class="text-body-2 text-right pr-1" :class="getOverDeadlineColor(isOverDeadline(datasktum.deadline, datasktum.status))">
+              期限：{{ datasktum.deadline }}
             </p>
           </v-card>
         </div>
@@ -694,6 +698,17 @@ async function deleteWorkspace(): Promise<void> {
   pending.value = false
 
   navigateTo('/')
+}
+
+// deadlineチェック
+function isOverDeadline(deadline: string, status: string): boolean {
+  const now: Date = new Date();
+  const deadlineDate: Date = new Date(deadline)
+  return compareDate(now, deadlineDate) === 1 && status !== 'done'
+}
+
+function getOverDeadlineColor(isOver: boolean): string {
+  return isOver ? 'text-red-accent-4' : ''
 }
 </script>
 <style scoped>
