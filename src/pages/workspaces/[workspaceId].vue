@@ -489,7 +489,7 @@ const taskList: Ref<TaskList> = ref({
     data: []
   },
   waiting: {
-    value: "レビュー待ち",
+    value: "待機",
     data: []
   },
   done: {

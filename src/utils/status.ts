@@ -10,7 +10,7 @@ export const getStatusName = (status: string): string => {
     case "working":
       return "作業中"
     case "waiting":
-      return "レビュー待ち"
+      return "待機"
     case "done":
       return "完了"
     default:
