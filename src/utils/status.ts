@@ -1,4 +1,30 @@
 /**
+ * ステータス一覧を取得
+ * @param status
+ * @returns ステータス物理名
+ */
+export const getStatusList = (): object[] => {
+  return [
+    {
+      title: "未着手",
+      value: "todo"
+    },
+    {
+      title: "作業中",
+      value: "working"
+    },
+    {
+      title: "待機",
+      value: "waiting"
+    },
+    {
+      title: "完了",
+      value: "done"
+    }
+  ]
+}
+
+/**
  * 論理名から物理名を取得
  * @param status
  * @returns ステータス物理名
