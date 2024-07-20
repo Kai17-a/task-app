@@ -133,45 +133,7 @@
       </template>
 
       <v-card-text max-height="400">
-        <div>
-          サブタスク&nbsp;:&nbsp;
-          <v-btn
-            icon="mdi-plus"
-            variant="text"
-            density="compact"
-            size="small"
-            @click="registSubTaskDialogOpen(taskDetail.id)"
-          ></v-btn>
-        </div>
-        <v-list v-if="subTasksSize !== 0">
-          <v-list-item
-            v-for="subTask in subTasks"
-            density="compact"
-            class="my-n2"
-          >
-            <div class="d-flex justify-start">
-              <input
-                class="mr-2"
-                type="checkbox"
-                id="sub-task"
-                :value="true"
-                v-model="subTask.is_done"
-                @change="updateSubTask(subTask.id, subTask.is_done)"
-              >
-              <span class="mr-1" style="font-size:small;">
-                {{ subTask.name }}
-              </span>
-              <v-btn
-                color="error"
-                icon="mdi-trash-can"
-                variant="text"
-                density="compact"
-                size="small"
-                @click="deleteSubTask(subTask.id, taskDetail.id)"
-              ></v-btn>
-            </div>
-          </v-list-item>
-        </v-list>
+        <SubTaskList v-model:taskDetail="taskDetail"/>
 
         <div class="mt-3 mb-1">メモ&nbsp;:</div>
         <v-sheet v-if="true" class="pa-3" min-height="150" color="#fefefe" :rounded="true" border>
@@ -260,34 +222,6 @@
     @close="errDialog = false"
   />
 
-  <v-dialog v-model="registSubTaskDialog" width="300">
-    <v-card title="サブタスク追加">
-      <template v-slot:append>
-        <v-icon icon="mdi-close" :class="(pending) ? 'not-allowed' : ''" @click="registSubTaskDialog = false"></v-icon>
-      </template>
-
-      <v-form @submit.prevent>
-        <div class="ml-10 mr-10">
-          <div class="text-right">
-            {{ registSubTaskName.length }}&nbsp;/&nbsp;15
-          </div>
-          <v-text-field
-            v-model="registSubTaskName"
-            :rules="[v => !!v || '必須事項です。']"
-            label="サブタスク名"
-            density="compact"
-            variant="outlined"
-            maxlength="15"
-            class="mb-3"
-          />
-        </div>
-        <v-card-actions max-width="300">
-          <v-spacer></v-spacer>
-          <v-btn type="submit" variant="flat" color="primary" text="追加" @click="registSubTask(registSubTaskId)" />
-        </v-card-actions>
-      </v-form>
-    </v-card>
-  </v-dialog>
 </template>
 <script lang="ts" setup>
 import Database from "tauri-plugin-sql-api"
@@ -299,7 +233,6 @@ import { exists, createDir, copyFile, removeFile } from '@tauri-apps/api/fs';
 import type { Task } from '~/types/task'
 import type { TaskList } from '~/types/taskList'
 import type { TaskDetail } from '~/types/taskDetail'
-import type { SubTask } from '~/types/subTask'
 import type { WorkspaceName } from '~/types/workspace'
 import type { Error } from '~/types/error'
 import type { TaskFile } from '~/types/taskFile'
@@ -574,7 +507,6 @@ async function getTaskDetail(taskId: number): Promise<void> {
       [taskId]
     )
     taskDetail.value = mainTasks[0]
-    await getSubTasks(taskId)
     await getTaskFiles(taskId)
   } catch (err) {
     errDialog.value = true
@@ -604,85 +536,6 @@ async function addTask(): Promise<void> {
   }
 }
 
-// サブタスク
-const subTasks: Ref<SubTask[]> = ref([])
-const subTasksSize: Ref<number> = ref(0)
-// // サブタスク取得
-async function getSubTasks(taskId: number) {
-  try {
-    const searchSubTasks: SubTask[] = await db.select(
-    "SELECT id, name, is_done FROM sub_tasks WHERE task_id = $1",
-    [taskId])
-
-    subTasksSize.value = searchSubTasks.length
-
-    if (subTasksSize.value !== 0) {
-      subTasks.value = searchSubTasks
-    }
-  } catch (err) {
-    errDialog.value = true
-    error.value.subTitle = "サブタスクの取得に失敗しました。"
-    error.value.items = [""]
-  }
-}
-
-// サブタスク登録処理
-const registSubTaskDialog: Ref<boolean> = ref(false)
-const registSubTaskId: Ref<number> = ref(0)
-const registSubTaskName: Ref<string> = ref("")
-function registSubTaskDialogOpen(task_id: number): void {
-  registSubTaskDialog.value = true
-  registSubTaskId.value = task_id
-}
-async function registSubTask(task_id: number) : Promise<void> {
-  try {
-    // Db更新処理
-    await db.execute(
-      "INSERT INTO sub_tasks (name, task_id) VALUES ($1, $2)",
-      [registSubTaskName.value, task_id]
-    )
-    await getSubTasks(task_id)
-    registSubTaskName.value = ""
-    registSubTaskDialog.value = false
-  } catch (err) {
-    error.value.subTitle = "サブタスクの登録に失敗しました。"
-    error.value.items = [""]
-    errDialog.value = true
-  }
-}
-
-// サブタスク更新処理
-async function updateSubTask(subTaskId: number, status: boolean): Promise<void> {
-
-  try {
-    // Db更新処理
-    await db.execute(
-      "UPDATE sub_tasks SET is_done = $1 WHERE id = $2",
-      [status, subTaskId]
-    )
-  } catch (err) {
-    errDialog.value = true
-    error.value.subTitle = "サブタスクの更新に失敗しました。"
-    error.value.items = [""]
-  }
-}
-
-// サブタスク削除処理
-async function deleteSubTask(subTaskId: number, task_id: number): Promise<void> {
-  try {
-    // Db更新処理
-    await db.select(
-      "DELETE FROM sub_tasks WHERE id = $1",
-      [subTaskId]
-    )
-    getSubTasks(task_id)
-  } catch (err) {
-    errDialog.value = true
-    error.value.subTitle = "サブタスクの削除に失敗しました。"
-    error.value.items = [""]
-  }
-}
-
 // タスク詳細を開く
 const detailDialog: Ref<boolean> = ref(false)
 const openTaskId: Ref<number> = ref(0)
@@ -707,17 +560,6 @@ async function deleteWorkspace(): Promise<void> {
   pending.value = false
 
   navigateTo('/')
-}
-
-// deadlineチェック
-function isOverDeadline(deadline: string, status: string): boolean {
-  const now: Date = new Date();
-  const deadlineDate: Date = new Date(deadline)
-  return compareDate(now, deadlineDate) === 1 && status !== 'done'
-}
-
-function getOverDeadlineColor(isOver: boolean): string {
-  return isOver ? 'text-red-accent-4' : ''
 }
 </script>
 <style scoped>
